@@ -5,7 +5,7 @@ manifest=json.loads(Path("asset-manifest.json").read_text())
 with zipfile.ZipFile("build-patch.zip") as z:patched=set(z.namelist())
 def copy_file(item):
  name,digest=item
- if name in patched:return
+ if name in patched or name==".last_build_id":return
  if name.startswith("/") or ".." in Path(name).parts:raise ValueError(name)
  target=root/name;target.parent.mkdir(parents=True,exist_ok=True)
  for attempt in range(4):
@@ -15,7 +15,7 @@ def copy_file(item):
    if hashlib.sha256(body).hexdigest()!=digest:raise ValueError("Content mismatch: "+name)
    target.write_bytes(body);return
   except Exception:
-   if attempt==3:raise
+   if attempt==3:raise RuntimeError("Cannot copy "+name)
    time.sleep(2*(attempt+1))
 with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:list(pool.map(copy_file,manifest.items()))
 with zipfile.ZipFile("build-patch.zip") as z:z.extractall(root)
