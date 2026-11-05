@@ -27,12 +27,12 @@ with zipfile.ZipFile("preview-patch.zip") as z:
  z.extractall(preview)
 for name,digest in preview_map.items():
  if hashlib.sha256((preview/name).read_bytes()).hexdigest()!=digest:raise ValueError("Preview mismatch: "+name)
-assert json.loads((preview/"version.json").read_text())["version"]=="0.19.2"
+assert json.loads((preview/"version.json").read_text())["version"]=="0.20.0"
 assert '<base href="/bibliya/preview-v0190/">' in (preview/"index.html").read_text()
 fonts=json.loads((preview/"assets/FontManifest.json").read_text())
 assert {"Roboto","Arial","ReadingSerif"}.issubset({f["family"] for f in fonts})
 preview.rename(root/"preview-v0190")
 total=sum(p.stat().st_size for p in root.rglob("*") if p.is_file())
 assert total<1_000_000_000
-print("Baseline 0.18.1 preserved; preview 0.19.2 verified; bytes",total)
+print("Baseline 0.18.1 preserved; preview 0.20.0 verified; bytes",total)
 
