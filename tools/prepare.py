@@ -33,7 +33,7 @@ with zipfile.ZipFile('main-update.zip') as patch:
 update_map=json.loads(Path('main-update-map.json').read_text(encoding='utf-8'))
 for name,digest in update_map.items():
  assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest,name
-assert json.loads((root/'version.json').read_text())['version']=='0.20.1'
+assert json.loads((root/'version.json').read_text())['version']=='0.20.2'
 p=root/'index.html';text=p.read_text(encoding='utf-8').replace('/bibliya/preview-v0190/','/bibliya/').replace('#7053bd','#9c6019');p.write_text(text,encoding='utf-8')
 p=root/'manifest.json';manifest=json.loads(p.read_text(encoding='utf-8'));manifest.update(name='Рема / Rhema',short_name='Рема',id='/bibliya/',scope='/bibliya/',start_url='/bibliya/');p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
 p=root/'flutter_service_worker.js';worker=p.read_text(encoding='utf-8').replace('bibliya-preview-0200','bibliya-shell-0200').replace("k.startsWith('bibliya-preview-')","k.startsWith('bibliya-shell-')");p.write_text(worker,encoding='utf-8')
@@ -43,6 +43,6 @@ preview=root/'preview-v0190';preview.mkdir(exist_ok=True)
 (root/'.nojekyll').write_text('')
 assert '<base href="/bibliya/">' in (root/'index.html').read_text(encoding='utf-8')
 assert manifest['name']=='Рема / Rhema'
-assert 'bibliya-shell-0201' in worker and '__slovo_modules_v1' in worker
+assert 'bibliya-shell-0202' in worker and '__slovo_modules_v1' in worker
 size=sum(p.stat().st_size for p in root.rglob('*') if p.is_file());assert size<1_000_000_000
 print('Rhema main release verified; immutable snapshot preserved; total bytes',size)
