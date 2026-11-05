@@ -1,5 +1,5 @@
 from pathlib import Path
-import concurrent.futures,hashlib,json,os,time,urllib.request,urllib.parse,shutil
+import concurrent.futures,hashlib,json,os,time,urllib.request,urllib.parse,shutil,zipfile
 root=Path('site');stage=Path('release-source-stage');stage.mkdir(exist_ok=True)
 baseline=json.loads(Path('release-source-map.json').read_text(encoding='utf-8-sig'))
 local=os.environ.get('RHEMA_LOCAL_SOURCE')
@@ -26,6 +26,14 @@ assert json.loads((stage/'version.json').read_text())['version']=='0.20.0'
 shutil.copytree(stage,root,dirs_exist_ok=True)
 # Immutable source snapshot makes repeat publication independent of mutable main files.
 shutil.copytree(stage,root/'release-v0200',dirs_exist_ok=True)
+with zipfile.ZipFile('main-update.zip') as patch:
+ for name in patch.namelist():
+  if name.startswith('/') or '..' in Path(name).parts:raise ValueError(name)
+ patch.extractall(root)
+update_map=json.loads(Path('main-update-map.json').read_text(encoding='utf-8'))
+for name,digest in update_map.items():
+ assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest,name
+assert json.loads((root/'version.json').read_text())['version']=='0.20.1'
 p=root/'index.html';text=p.read_text(encoding='utf-8').replace('/bibliya/preview-v0190/','/bibliya/').replace('#7053bd','#9c6019');p.write_text(text,encoding='utf-8')
 p=root/'manifest.json';manifest=json.loads(p.read_text(encoding='utf-8'));manifest.update(name='Рема / Rhema',short_name='Рема',id='/bibliya/',scope='/bibliya/',start_url='/bibliya/');p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
 p=root/'flutter_service_worker.js';worker=p.read_text(encoding='utf-8').replace('bibliya-preview-0200','bibliya-shell-0200').replace("k.startsWith('bibliya-preview-')","k.startsWith('bibliya-shell-')");p.write_text(worker,encoding='utf-8')
@@ -35,6 +43,6 @@ preview=root/'preview-v0190';preview.mkdir(exist_ok=True)
 (root/'.nojekyll').write_text('')
 assert '<base href="/bibliya/">' in (root/'index.html').read_text(encoding='utf-8')
 assert manifest['name']=='Рема / Rhema'
-assert 'bibliya-shell-0200' in worker and '__slovo_modules_v1' in worker
+assert 'bibliya-shell-0201' in worker and '__slovo_modules_v1' in worker
 size=sum(p.stat().st_size for p in root.rglob('*') if p.is_file());assert size<1_000_000_000
 print('Rhema main release verified; immutable snapshot preserved; total bytes',size)
